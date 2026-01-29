@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="痛風計算機">
-<title>痛風計算機 v7.5</title>
+<title>痛風計算機</title>
 <style>
     :root {
         --safe: #34C759;
@@ -197,7 +197,7 @@
     <div class="dashboard">
         <div class="dashboard-header">
             <div>
-                <div class="limit-label">本餐普林 (目標 <150)</div>
+                <div class="limit-label">本餐普林 (目標 <200)</div>
                 <div class="total-display"><span id="totalPurine">0</span> <span style="font-size:14px; color:#666;">mg</span></div>
             </div>
             <button class="clear-btn" onclick="clearPlate()">🗑️ 重置</button>
@@ -207,7 +207,7 @@
             <div class="marker-line" style="left: 37.5%;"></div> </div>
         <div style="display:flex; justify-content:space-between; margin-top:4px; font-size:10px; color:#999;">
             <span>0</span>
-            <span style="margin-left:-10px;">150 (單餐)</span>
+            <span style="margin-left:-10px;">200 (單餐)</span>
             <span>400 (全日)</span>
         </div>
         <div id="statusText" class="status-area" style="color:var(--safe);">✅ 準備開始</div>
@@ -660,9 +660,9 @@
             statusText.style.color = "var(--danger)";
         } else {
             progressFill.style.opacity = "1";
-            if (total < 150) {
+            if (total < 200) {
                 progressFill.style.backgroundColor = "var(--safe)";
-                statusText.innerText = "✅ 這一餐很安全 (單餐建議 <150)";
+                statusText.innerText = "✅ 這一餐很安全 (單餐建議 <200)";
                 statusText.style.color = "var(--safe)";
             } else if (total < 300) {
                 progressFill.style.backgroundColor = "var(--warn)";
