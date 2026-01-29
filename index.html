@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="痛風計算機">
-<title>痛風計算機</title>
+<title>痛風計算機 v7.5</title>
 <style>
     :root {
         --safe: #34C759;
@@ -76,7 +76,39 @@
     input[type="text"] {
         width: 100%; padding: 12px; font-size: 16px; border: none; border-radius: 12px; background: #E5E5EA; outline: none; box-sizing: border-box;
     }
-    .filter-group { display: flex; gap: 8px; margin-top: 10px; overflow-x: auto; padding-bottom: 5px; }
+    
+    /* 橫向滾動標籤列 */
+    .tag-scroll-area {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        padding: 5px 2px 15px 2px;
+        margin-bottom: 5px;
+        -webkit-overflow-scrolling: touch;
+    }
+    .tag-scroll-area::-webkit-scrollbar { display: none; }
+
+    .tag-btn {
+        padding: 6px 14px;
+        border-radius: 20px;
+        border: 1px solid #ddd;
+        background: white;
+        color: #666;
+        font-size: 13px;
+        font-weight: 500;
+        white-space: nowrap;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .tag-btn.active {
+        background: var(--blue);
+        color: white;
+        border-color: var(--blue);
+        font-weight: 600;
+        box-shadow: 0 2px 6px rgba(0,122,255,0.3);
+    }
+
+    .filter-btn-group { display: flex; gap: 8px; margin-top: 10px; overflow-x: auto; padding-bottom: 5px; }
     .filter-btn {
         padding: 6px 12px; border-radius: 15px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; opacity: 0.6; color: white; white-space: nowrap; flex-shrink: 0;
     }
@@ -105,11 +137,25 @@
     .bg-yellow { background-color: var(--warn); color: black; }
     .bg-red { background-color: var(--danger); }
     
-    /* 按鈕樣式 */
-    .add-btn {
-        background: #F2F2F7; color: var(--blue); border: none; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 600; cursor: pointer;
+    /* v7.5 新增：雙按鈕群組 (半份/全份) */
+    .action-group {
+        display: flex;
+        gap: 5px;
     }
-    .add-btn:active { background: #d1d1d6; }
+    .action-btn {
+        background: #F2F2F7; 
+        color: var(--blue); 
+        border: 1px solid #E5E5EA; 
+        padding: 6px 10px; 
+        border-radius: 8px; 
+        font-size: 12px; 
+        font-weight: 600; 
+        cursor: pointer;
+        min-width: 40px;
+    }
+    .action-btn:active { background: #d1d1d6; }
+    .action-btn.half { color: #666; font-size: 11px; }
+
     .remove-btn {
         color: var(--danger); background: none; border: 1px solid var(--danger); padding: 4px 10px; border-radius: 6px; font-size: 12px; cursor: pointer;
     }
@@ -170,6 +216,9 @@
     <div id="searchPage" class="page-container active">
         <div class="controls">
             <input type="text" id="searchInput" placeholder="搜尋食物 (例: 芥蘭, 牛排)..." onkeyup="filterFood()">
+            
+            <div id="tagFilters" class="tag-scroll-area"></div>
+
             <div class="filter-btn-group">
                 <button class="filter-btn bg-green" onclick="filterByColor('green')">🟢 放心</button>
                 <button class="filter-btn bg-yellow" onclick="filterByColor('yellow')">🟡 適量</button>
@@ -219,111 +268,212 @@
     </div>
 
 <script>
-    // 🌟 v7.2 完整資料庫 (含修正後的分類 + 代謝地雷邏輯)
+    // 🌟 v7.3 完整資料庫 (含標籤分類)
     const defaultDB = [
-        // --- 🟢 綠燈：放心吃 (Low Purine) 0 ~ 50 mg ---
-        {name: "菜心/芥蘭", purine: 25, level: 0},
-        {name: "青瓜", purine: 10, level: 0},
-        {name: "茄子", purine: 20, level: 0},
-        {name: "粟米 (Corn)", purine: 30, level: 0},
-        {name: "南瓜", purine: 25, level: 0},
-        {name: "甘筍/紅蘿蔔", purine: 15, level: 0},
-        {name: "雲耳/木耳", purine: 10, level: 0},
-        {name: "金針菇", purine: 50, level: 0},
-        {name: "番茄蛋飯", purine: 50, level: 0},
-        {name: "米粉/粉絲", purine: 15, level: 0},
-        {name: "通粉/意粉", purine: 20, level: 0},
-        {name: "方包/饅頭", purine: 20, level: 0},
-        {name: "蘋果", purine: 14, level: 0},
-        {name: "香蕉", purine: 16, level: 0},
-        {name: "火龍果", purine: 20, level: 0},
-        {name: "西瓜", purine: 10, level: 0},
-        {name: "藍莓/士多啤梨", purine: 18, level: 0},
-        {name: "布甸/啫喱", purine: 8, level: 0},
-        {name: "海參", purine: 8, level: 0},
-        {name: "三文魚籽", purine: 20, level: 0},
-        {name: "茶碗蒸", purine: 20, level: 0},
-        {name: "西蘭花", purine: 70, level: 0},
-        {name: "菠菜", purine: 57, level: 0},
-        {name: "豆腐", purine: 20, level: 0},
-        {name: "白飯/麵", purine: 25, level: 0},
-        {name: "雞蛋", purine: 0, level: 0},
-        {name: "牛奶", purine: 0, level: 0},
-
-        // --- 🟡 黃燈：適量吃 (Medium Purine) 50 ~ 150 mg --- 
-        {name: "西冷/肉眼牛排", purine: 110, level: 1},
-        {name: "牛腩", purine: 130, level: 1},
-        {name: "吉列牛/豬 (炸)", purine: 120, level: 1},
-        {name: "雞腿肉", purine: 140, level: 1},
-        {name: "瘦豬肉", purine: 119, level: 1},
-        {name: "雞胸肉", purine: 137, level: 1},
-        {name: "Parma Ham", purine: 150, level: 1},
-        {name: "魚子醬", purine: 144, level: 1},
-        {name: "小籠包", purine: 100, level: 1},
-        {name: "鳳爪", purine: 130, level: 1},
-        {name: "貢丸/牛丸", purine: 80, level: 1},
-        {name: "三文魚", purine: 119, level: 1},
-        {name: "鱈魚", purine: 109, level: 1},
-        {name: "蘆筍", purine: 55, level: 1},
-        {name: "鮮冬菇", purine: 60, level: 1},
-        {name: "皮蛋瘦肉粥", purine: 70, level: 1},
-        {name: "粟米肉粒飯", purine: 80, level: 1},
-        {name: "杏仁/核桃", purine: 35, level: 1},
-        {name: "花生", purine: 79, level: 1},
-
-        // --- 🔴 紅燈：小心 / 避免 (High Purine) > 150 mg ---
-        {name: "雞精/滴雞精", purine: 500, level: 2}, 
-        {name: "小魚乾", purine: 1138, level: 2},     
-        {name: "酵母粉", purine: 680, level: 2},
-        {name: "豬肝", purine: 284, level: 2},
-        {name: "大閘蟹膏", purine: 300, level: 2},    
-        {name: "老火湯", purine: 150, level: 2},      
-        {name: "燒鵝/鴨", purine: 165, level: 2},
-        {name: "豬潤麵", purine: 280, level: 2},
-        {name: "沙甸魚", purine: 210, level: 2},
-        {name: "鯖魚", purine: 165, level: 2},
-        {name: "蠔/青口", purine: 180, level: 2},
-        {name: "乾黃豆", purine: 172, level: 2},
-        {name: "冬蔭功湯", purine: 180, level: 2},    
-        {name: "豚骨拉麵湯", purine: 160, level: 2},
-
-        // --- 🚨 特殊代謝地雷 (低數值但強制紅燈) ---
-        // 啤酒：雙重打擊
-        {name: "啤酒 (350ml)", purine: 20, level: 2, isTrigger: true}, 
+        // --- 🟢 綠燈 ---
+        {name: "菜心/芥蘭", purine: 25, level: 0, tags: ["蔬菜"]},
+        {name: "青瓜", purine: 10, level: 0, tags: ["蔬菜"]},
+        {name: "茄子", purine: 20, level: 0, tags: ["蔬菜"]},
+        {name: "粟米 (Corn)", purine: 30, level: 0, tags: ["蔬菜", "火鍋"]},
+        {name: "南瓜", purine: 25, level: 0, tags: ["蔬菜"]},
+        {name: "甘筍/紅蘿蔔", purine: 15, level: 0, tags: ["蔬菜", "火鍋"]},
+        {name: "西蘭花", purine: 70, level: 0, tags: ["蔬菜"]},
+        {name: "菠菜", purine: 57, level: 0, tags: ["蔬菜", "火鍋"]},
         
-        // 烈酒：強烈阻礙代謝
-        {name: "威士忌/伏特加", purine: 0, level: 2, isTrigger: true},
+        {name: "金針菇", purine: 50, level: 0, tags: ["菇類", "火鍋"]},
+        {name: "雞髀菇/杏鮑菇", purine: 45, level: 0, tags: ["菇類"]},
+        {name: "白蘑菇/大啡菇", purine: 30, level: 0, tags: ["菇類"]},
+        {name: "鴻喜菇 (本菇)", purine: 40, level: 0, tags: ["菇類", "火鍋"]},
+        {name: "靈芝菇", purine: 45, level: 0, tags: ["菇類"]},
+        {name: "黑木耳/雲耳", purine: 10, level: 0, tags: ["菇類", "火鍋"]},
+        {name: "雪耳/白木耳", purine: 10, level: 0, tags: ["菇類", "甜品"]},
+
+        {name: "蘋果", purine: 14, level: 0, tags: ["水果"]},
+        {name: "香蕉", purine: 16, level: 0, tags: ["水果"]},
+        {name: "火龍果", purine: 20, level: 0, tags: ["水果"]},
+        {name: "西瓜", purine: 10, level: 0, tags: ["水果"]},
+        {name: "藍莓/士多啤梨", purine: 18, level: 0, tags: ["水果"]},
+
+        {name: "白飯/麵", purine: 25, level: 0, tags: ["主食"]},
+        {name: "米粉/粉絲", purine: 15, level: 0, tags: ["主食", "火鍋"]},
+        {name: "通粉/意粉", purine: 20, level: 0, tags: ["主食"]},
+        {name: "方包/饅頭", purine: 20, level: 0, tags: ["主食", "酒樓點心"]},
+        {name: "番茄蛋飯", purine: 50, level: 0, tags: ["主食"]},
+
+        {name: "雞蛋", purine: 0, level: 0, tags: ["蛋奶"]},
+        {name: "牛奶", purine: 0, level: 0, tags: ["蛋奶", "飲品"]},
+        {name: "豆腐", purine: 20, level: 0, tags: ["豆製品", "火鍋"]},
+        {name: "茶碗蒸", purine: 20, level: 0, tags: ["蛋奶", "日式"]},
+        {name: "海參", purine: 8, level: 0, tags: ["海鮮", "酒樓點心"]},
+        {name: "三文魚籽", purine: 20, level: 0, tags: ["海鮮", "日式"]},
+        {name: "布甸/啫喱", purine: 8, level: 0, tags: ["甜品"]},
+
+        // --- 🟡 黃燈 ---
+        {name: "西冷/肉眼牛排", purine: 110, level: 1, tags: ["肉類", "西餐"]},
+        {name: "牛腩", purine: 130, level: 1, tags: ["肉類", "粉麵"]},
+        {name: "吉列牛/豬 (炸)", purine: 120, level: 1, tags: ["肉類", "日式"]},
+        {name: "瘦豬肉", purine: 119, level: 1, tags: ["肉類"]},
+        {name: "雞腿肉", purine: 140, level: 1, tags: ["肉類"]},
+        {name: "雞胸肉", purine: 137, level: 1, tags: ["肉類"]},
+        {name: "Parma Ham", purine: 150, level: 1, tags: ["肉類", "西餐"]},
+
+        {name: "三文魚", purine: 119, level: 1, tags: ["海鮮", "日式"]},
+        {name: "鱈魚", purine: 109, level: 1, tags: ["海鮮"]},
+        {name: "魚子醬", purine: 144, level: 1, tags: ["海鮮", "西餐"]},
+        {name: "龍蝦 (肉)", purine: 100, level: 1, tags: ["海鮮", "酒樓點心"]},
+        {name: "波士頓龍蝦", purine: 105, level: 1, tags: ["海鮮"]},
+        {name: "虎蝦/大蝦", purine: 120, level: 1, tags: ["海鮮", "火鍋"]},
+        {name: "基圍蝦/白灼蝦", purine: 135, level: 1, tags: ["海鮮", "酒樓點心"]},
+        {name: "琵琶蝦", purine: 125, level: 1, tags: ["海鮮"]},
+        {name: "小龍蝦 (肉)", purine: 130, level: 1, tags: ["海鮮"]},
+
+        {name: "清蒸石斑", purine: 115, level: 1, tags: ["海鮮", "酒樓點心"]},
+        {name: "清蒸鱸魚", purine: 110, level: 1, tags: ["海鮮", "酒樓點心"]},
+        {name: "鯇魚/草魚", purine: 110, level: 1, tags: ["海鮮", "火鍋"]},
+        {name: "大眼雞 (木棉魚)", purine: 130, level: 1, tags: ["海鮮"]},
+        {name: "香煎黃花魚", purine: 125, level: 1, tags: ["海鮮"]},
+        {name: "檸檬烏頭", purine: 125, level: 1, tags: ["海鮮", "泰式"]},
+        {name: "煎封鯧魚", purine: 140, level: 1, tags: ["海鮮"]},
+        {name: "比目魚/扁口魚", purine: 120, level: 1, tags: ["海鮮", "日式"]},
+        {name: "紅衫魚 (煎)", purine: 135, level: 1, tags: ["海鮮"]},
+
+        {name: "小籠包", purine: 100, level: 1, tags: ["酒樓點心"]},
+        {name: "鳳爪", purine: 130, level: 1, tags: ["酒樓點心"]},
+        {name: "貢丸/牛丸", purine: 80, level: 1, tags: ["加工食品", "火鍋", "粉麵"]},
+        {name: "蘆筍", purine: 55, level: 1, tags: ["蔬菜"]},
+        {name: "鮮冬菇/香菇", purine: 60, level: 1, tags: ["菇類", "火鍋"]},
+        {name: "秀珍菇", purine: 90, level: 1, tags: ["菇類", "火鍋"]},
+        {name: "草菇", purine: 90, level: 1, tags: ["菇類"]},
+        {name: "猴頭菇", purine: 65, level: 1, tags: ["菇類"]},
+        {name: "舞菇", purine: 80, level: 1, tags: ["菇類"]},
+
+        {name: "皮蛋瘦肉粥", purine: 70, level: 1, tags: ["主食", "粥品"]},
+        {name: "粟米肉粒飯", purine: 80, level: 1, tags: ["主食"]},
+        {name: "花生", purine: 79, level: 1, tags: ["零食"]},
+        {name: "杏仁/核桃", purine: 35, level: 1, tags: ["零食"]},
+
+        {name: "鮮蝦餃", purine: 120, level: 1, tags: ["酒樓點心"]},
+        {name: "蟹籽燒賣", purine: 130, level: 1, tags: ["酒樓點心"]},
+        {name: "山竹牛肉球", purine: 110, level: 1, tags: ["酒樓點心"]},
+        {name: "叉燒包", purine: 90, level: 1, tags: ["酒樓點心"]},
+        {name: "蘿蔔糕 (煎)", purine: 70, level: 1, tags: ["酒樓點心"]},
+        {name: "鹹水角", purine: 100, level: 1, tags: ["酒樓點心"]},
+        {name: "鮮蝦腸粉", purine: 90, level: 1, tags: ["酒樓點心"]},
+        {name: "牛肉腸粉", purine: 80, level: 1, tags: ["酒樓點心"]},
+        {name: "珍珠雞/糯米雞", purine: 120, level: 1, tags: ["酒樓點心"]},
+        {name: "春捲 (炸)", purine: 110, level: 1, tags: ["酒樓點心"]},
+        {name: "豉汁蒸排骨", purine: 145, level: 1, tags: ["酒樓點心", "肉類"]},
         
-        // 燒酒類
-        {name: "日本燒酎 (無糖)", purine: 0, level: 2, isTrigger: true},
-        {name: "韓國燒酒 (含糖)", purine: 0, level: 2, isTrigger: true}, // 酒精+果糖
+        // --- 🔴 紅燈 ---
+        {name: "小魚乾", purine: 1138, level: 2, tags: ["乾貨", "零食"]},
+        {name: "酵母粉", purine: 680, level: 2, tags: ["調味"]},
+        {name: "雞精/滴雞精", purine: 500, level: 2, tags: ["補品"]},
+        {name: "蝦米/蝦皮 (乾)", purine: 1100, level: 2, tags: ["乾貨"]},
+        {name: "櫻花蝦", purine: 800, level: 2, tags: ["乾貨"]},
         
-        // 含糖飲品
-        {name: "珍珠奶茶", purine: 10, level: 2, isTrigger: true},     
-        {name: "含糖汽水/可樂", purine: 10, level: 2, isTrigger: true},
+        {name: "大閘蟹膏", purine: 300, level: 2, tags: ["海鮮"]},
+        {name: "豬肝", purine: 284, level: 2, tags: ["內臟", "粉麵"]},
+        {name: "豬潤麵", purine: 280, level: 2, tags: ["內臟", "粉麵"]},
+        {name: "鵝肝", purine: 380, level: 2, tags: ["內臟", "西餐"]},
+
+        {name: "沙甸魚", purine: 210, level: 2, tags: ["海鮮"]},
+        {name: "蠔/青口", purine: 180, level: 2, tags: ["海鮮", "火鍋"]},
+        {name: "鯖魚", purine: 165, level: 2, tags: ["海鮮", "日式"]},
+        {name: "甜蝦 (刺身)", purine: 170, level: 2, tags: ["海鮮", "日式"]},
+        {name: "龍蝦頭/蝦膏", purine: 300, level: 2, tags: ["海鮮"]},
+        {name: "牡丹蝦", purine: 160, level: 2, tags: ["海鮮", "日式"]},
+
+        {name: "白飯魚", purine: 240, level: 2, tags: ["海鮮"]},
+        {name: "多春魚", purine: 280, level: 2, tags: ["海鮮", "日式"]},
+        {name: "秋刀魚", purine: 210, level: 2, tags: ["海鮮", "日式"]},
+        {name: "馬友魚 (鹹魚)", purine: 300, level: 2, tags: ["海鮮", "乾貨"]},
+        {name: "燒鵝/鴨", purine: 165, level: 2, tags: ["肉類"]},
+
+        {name: "冬蔭功湯", purine: 180, level: 2, tags: ["湯品", "泰式"]},
+        {name: "豚骨拉麵湯", purine: 160, level: 2, tags: ["湯品", "日式"]},
+        {name: "老火湯", purine: 150, level: 2, tags: ["湯品", "酒樓點心"]},
+
+        {name: "乾冬菇/乾香菇", purine: 380, level: 2, tags: ["乾貨"]},
+        {name: "牛肝菌 (乾)", purine: 300, level: 2, tags: ["乾貨"]},
+        {name: "姬松茸 (乾)", purine: 290, level: 2, tags: ["乾貨"]},
+        {name: "乾黃豆", purine: 172, level: 2, tags: ["乾貨"]},
+
+        {name: "豉汁蒸鳳爪", purine: 160, level: 2, tags: ["酒樓點心"]},
+        {name: "豬潤燒賣", purine: 280, level: 2, tags: ["酒樓點心", "內臟"]},
+        {name: "金錢肚/牛柏葉", purine: 150, level: 2, tags: ["酒樓點心", "內臟"]},
+        {name: "鮮竹卷", purine: 160, level: 2, tags: ["酒樓點心"]},
+        {name: "灌湯餃", purine: 180, level: 2, tags: ["酒樓點心"]},
+        {name: "芋角 (炸)", purine: 120, level: 2, tags: ["酒樓點心"]},
+        {name: "XO醬炒腸粉", purine: 140, level: 2, tags: ["酒樓點心"]},
+
+        // --- 🚨 代謝地雷 ---
+        {name: "啤酒 (350ml)", purine: 20, level: 2, isTrigger: true, tags: ["飲品", "酒"]},
+        {name: "威士忌/伏特加", purine: 0, level: 2, isTrigger: true, tags: ["飲品", "酒"]},
+        {name: "日本燒酎", purine: 0, level: 2, isTrigger: true, tags: ["飲品", "酒"]},
+        {name: "韓國燒酒", purine: 0, level: 2, isTrigger: true, tags: ["飲品", "酒"]},
+        {name: "珍珠奶茶", purine: 10, level: 2, isTrigger: true, tags: ["飲品"]},
+        {name: "含糖汽水", purine: 10, level: 2, isTrigger: true, tags: ["飲品"]},
     ];
 
     let allFoods = [];
     let currentFilter = 'all';
+    let currentTag = 'all'; 
 
     // 初始化
     function init() {
         allFoods = [...defaultDB];
-        // 排序：綠燈優先 (讓心情好一點)
         allFoods.sort((a, b) => a.level - b.level);
         
-        // 載入自訂食物
         const customData = localStorage.getItem('myGoutFoods_v7');
         if (customData) {
             const customFoods = JSON.parse(customData);
             customFoods.forEach(f => f.isCustom = true);
             allFoods = [...customFoods, ...allFoods];
         }
+        
+        renderTags(); 
         filterFood();
         renderPlate();
     }
 
-    // 頁面切換
+    // 渲染標籤列
+    function renderTags() {
+        const tags = new Set();
+        allFoods.forEach(food => {
+            if (food.tags) food.tags.forEach(tag => tags.add(tag));
+        });
+        
+        const sortedTags = Array.from(tags).sort((a, b) => {
+            if (a === '酒樓點心') return -1;
+            if (b === '酒樓點心') return 1;
+            return a.localeCompare(b);
+        });
+
+        const container = document.getElementById('tagFilters');
+        if (!container) return; 
+        container.innerHTML = ''; 
+
+        const allBtn = document.createElement('button');
+        allBtn.className = `tag-btn ${currentTag === 'all' ? 'active' : ''}`;
+        allBtn.innerText = '全部種類';
+        allBtn.onclick = () => toggleTag('all');
+        container.appendChild(allBtn);
+
+        sortedTags.forEach(tag => {
+            const btn = document.createElement('button');
+            btn.className = `tag-btn ${currentTag === tag ? 'active' : ''}`;
+            btn.innerText = tag;
+            btn.onclick = () => toggleTag(tag);
+            container.appendChild(btn);
+        });
+    }
+
+    function toggleTag(tag) {
+        currentTag = tag;
+        renderTags(); 
+        filterFood(); 
+    }
+
     function switchTab(tab) {
         document.querySelectorAll('.page-container').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -331,7 +481,7 @@
         document.getElementById('tab-' + tab).classList.add('active');
     }
 
-    // 渲染搜尋列表
+    // 渲染搜尋列表 (顯示半份/全份按鈕)
     function renderList(items) {
         const listContainer = document.getElementById('foodList');
         listContainer.innerHTML = '';
@@ -347,7 +497,6 @@
             else if(item.level == 1) { badgeClass = 'bg-yellow'; badgeText = '黃'; }
             else { badgeClass = 'bg-red'; badgeText = '紅'; }
 
-            // 如果是地雷，在列表中也標示
             const triggerText = item.isTrigger ? '⚠️ ' : '';
             const itemString = encodeURIComponent(JSON.stringify(item));
             
@@ -359,13 +508,16 @@
                         <span>約 ${item.purine} mg/100g</span>
                     </div>
                 </div>
-                <button class="add-btn" onclick="addToPlate('${itemString}')">加入</button>
+                <div class="action-group">
+                    <button class="action-btn half" onclick="addPortion('${itemString}', 0.5)">半份</button>
+                    <button class="action-btn" onclick="addPortion('${itemString}', 1)">全份</button>
+                </div>
             `;
             listContainer.appendChild(div);
         });
     }
 
-    // 渲染餐盤列表 (帶有移除按鈕)
+    // 渲染餐盤列表
     function renderPlateList(items) {
         const listContainer = document.getElementById('plateList');
         listContainer.innerHTML = '';
@@ -376,16 +528,24 @@
         items.forEach((item, index) => {
             const div = document.createElement('div');
             div.className = 'food-card';
-            const realIndex = items.length - 1 - index; // 倒序
+            const realIndex = items.length - 1 - index; 
             
-            // 警示文字
             const triggerWarning = item.isTrigger ? '<br><span style="color:var(--danger); font-size:11px;">⚠️ 代謝阻礙 (酒精/糖)</span>' : '';
+            
+            // 🌟 顯示倍率邏輯：
+            // 1. 如果是 1.0 (全份)，不顯示 (x1)
+            // 2. 如果是 0.5 (半份)，顯示 (x0.5)
+            // 3. 如果是 2.0 (兩份)，顯示 (x2)
+            let portionText = '';
+            if (item.portion !== 1) {
+                portionText = ` <span style="font-size:13px; color:#007AFF; font-weight:bold;">(x${item.portion})</span>`;
+            }
 
             div.innerHTML = `
                 <div class="food-info">
-                    <span class="food-name">${item.name} ${triggerWarning}</span>
+                    <span class="food-name">${item.name}${portionText} ${triggerWarning}</span>
                     <div class="food-meta">
-                        <span>+ ${item.purine} mg</span>
+                        <span>+ ${Math.round(item.purine)} mg</span>
                     </div>
                 </div>
                 <button class="remove-btn" onclick="removeFromPlate(${realIndex})">移除</button>
@@ -394,15 +554,18 @@
         });
     }
 
-    // 搜尋功能
     function filterFood() {
         const searchText = document.getElementById('searchInput').value.toLowerCase();
         const filtered = allFoods.filter(item => {
             const matchesSearch = item.name.toLowerCase().includes(searchText);
+            
             const matchesColor = currentFilter === 'all' ? true :
                 currentFilter === 'green' ? item.level == 0 :
                 currentFilter === 'yellow' ? item.level == 1 : item.level == 2;
-            return matchesSearch && matchesColor;
+            
+            const matchesTag = currentTag === 'all' ? true : (item.tags && item.tags.includes(currentTag));
+            
+            return matchesSearch && matchesColor && matchesTag;
         });
         renderList(filtered);
     }
@@ -414,14 +577,46 @@
         filterFood();
     }
 
-    // --- 核心計算邏輯 (含地雷判定) ---
-    function addToPlate(itemString) {
+    // 🌟 核心計算邏輯：直接加入 (含自動合併)
+    function addPortion(itemString, portion) {
         const item = JSON.parse(decodeURIComponent(itemString));
         let plate = JSON.parse(localStorage.getItem('goutPlate_v7') || "[]");
-        plate.push(item);
+
+        // 1. 檢查是否已存在同名食物
+        const existingIndex = plate.findIndex(p => p.name === item.name);
+
+        if (existingIndex !== -1) {
+            // A. 已存在：更新該項目的份量與普林
+            let existingItem = plate[existingIndex];
+            
+            // 更新份量 (例如原本 0.5，再加 0.5 變成 1.0)
+            existingItem.portion = (existingItem.portion || 1) + portion;
+            
+            // 重新計算總普林 (基數 * 新份量)
+            // 這裡假設 item.purine 是 100g 的基準值
+            // 但因為 item 是從列表點擊來的，它的 purine 就是基準值
+            // 我們需要確保 plate 裡存的資料結構正確
+            
+            // 為了精確，我們每次都用原始基準值 (item.purine) 來重算總普林
+            existingItem.purine = item.purine * existingItem.portion;
+            
+            plate[existingIndex] = existingItem;
+        } else {
+            // B. 不存在：新增一筆
+            // 複製物件並加入 portion 屬性
+            const newItem = {
+                ...item,
+                portion: portion,
+                purine: item.purine * portion // 初始普林 = 基準 * 份量
+            };
+            plate.push(newItem);
+        }
+
         localStorage.setItem('goutPlate_v7', JSON.stringify(plate));
         renderPlate();
-        showToast(`已加入 ${item.name}`);
+        
+        const portionMsg = portion === 0.5 ? "半份" : "全份";
+        showToast(`已加入 ${item.name} (${portionMsg})`);
     }
 
     function removeFromPlate(index) {
@@ -440,15 +635,13 @@
 
     function renderPlate() {
         const plate = JSON.parse(localStorage.getItem('goutPlate_v7') || "[]");
-        renderPlateList(plate.slice().reverse()); // 顯示列表
+        renderPlateList(plate.slice().reverse());
         
         let total = 0;
-        // 🌟 關鍵邏輯：檢查是否有地雷
         const hasTrigger = plate.some(item => item.isTrigger === true);
 
         plate.forEach(i => total += (i.purine || 0));
         
-        // 更新 UI
         const totalDisplay = document.getElementById('totalPurine');
         const progressFill = document.getElementById('progressFill');
         const statusText = document.getElementById('statusText');
@@ -458,18 +651,14 @@
         let percentage = (total / 400) * 100;
         if(percentage > 100) percentage = 100;
         
-        // 設定進度條寬度
         progressFill.style.width = percentage + "%";
         
-        // 顏色與狀態判定
         if (hasTrigger) {
-            // 🚨 觸發地雷：強制紅燈
             progressFill.style.backgroundColor = "var(--danger)";
-            progressFill.style.opacity = "0.8"; // 稍微變暗以示不同
+            progressFill.style.opacity = "0.8";
             statusText.innerHTML = "🚨 <b>代謝受阻警報！</b><br>含酒精/高糖，阻礙尿酸排出";
             statusText.style.color = "var(--danger)";
         } else {
-            // 正常普林計算
             progressFill.style.opacity = "1";
             if (total < 150) {
                 progressFill.style.backgroundColor = "var(--safe)";
@@ -487,7 +676,6 @@
         }
     }
 
-    // 數字跳動動畫
     function animateValue(obj, start, end, duration) {
         if (start === end) return;
         let startTimestamp = null;
@@ -502,7 +690,7 @@
         window.requestAnimationFrame(step);
     }
 
-    // --- 自訂食物 ---
+    // 自訂食物
     function openCustomModal() { document.getElementById('customModal').style.display = 'flex'; }
     function closeCustomModal() { document.getElementById('customModal').style.display = 'none'; }
     
@@ -513,7 +701,7 @@
         
         if(!name) { alert("請輸入名稱"); return; }
         
-        const newFood = { name, purine, level, isCustom:true };
+        const newFood = { name, purine, level, isCustom:true, tags: ["自訂"] };
         let customFoods = JSON.parse(localStorage.getItem('myGoutFoods_v7') || "[]");
         customFoods.unshift(newFood);
         localStorage.setItem('myGoutFoods_v7', JSON.stringify(customFoods));
@@ -527,7 +715,6 @@
         setTimeout(() => t.className = "", 2000);
     }
 
-    // 點擊遮罩關閉
     window.onclick = function(event) {
         if (event.target.classList.contains('modal-overlay')) {
             closeCustomModal();
