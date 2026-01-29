@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="痛風管家">
+<title>痛風管家 v4 (格子版)</title>
+<style>
+    :root {
+        --safe: #34C759;
+        --warn: #FFCC00;
+        --danger: #FF3B30;
+        --bg: #F2F2F7;
+        --card: #FFFFFF;
+        --text: #000000;
+        --blue: #007AFF;
+        --gray: #8E8E93;
+    }
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background-color: var(--bg);
+        margin: 0;
+        padding: 0;
+        -webkit-tap-highlight-color: transparent;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .page-container {
+        flex: 1;
+        overflow-y: auto;
+        padding: 15px;
+        padding-bottom: 90px;
+        display: none;
+    }
+    .page-container.active { display: block; }
+
+    h1 { text-align: center; font-size: 20px; margin-bottom: 15px; color: #1C1C1E; font-weight: 700; }
+    
+    /* Search & Controls */
+    .header-controls { display: flex; gap: 10px; margin-bottom: 15px; position: sticky; top: 0; z-index: 20; background: var(--bg); padding-bottom: 5px;}
+    input[type="text"] {
+        flex: 1; padding: 12px; font-size: 16px; border: none; border-radius: 12px; background: #E5E5EA; outline: none;
+    }
+    .add-custom-btn {
+        background: var(--blue); color: white; border: none; border-radius: 12px; width: 44px; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    }
+
+    .filter-btn-group { display: flex; justify-content: center; gap: 6px; margin-bottom: 15px; flex-wrap: wrap; }
+    .filter-btn { padding: 6px 12px; border-radius: 15px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; opacity: 0.6; color: white; transition: 0.2s; }
+    .filter-btn.active { opacity: 1; transform: scale(1.05); }
+
+    /* --- 格子佈局核心 CSS --- */
+    #foodList {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr); /* 強制兩欄 */
+        gap: 12px; /* 格子間距 */
+    }
+
+    /* 格子卡片樣式 */
+    .grid-card {
+        background: var(--card);
+        border-radius: 16px;
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        transition: transform 0.1s;
+        position: relative;
+    }
+    .grid-card:active { transform: scale(0.97); }
+
+    .food-name { font-size: 17px; font-weight: 600; margin-bottom: 8px; line-height: 1.3; }
+    .food-tag { font-size: 10px; color: #8E8E93; position: absolute; top: 10px; right: 10px;}
+    
+    .badge { padding: 4px 8px; border-radius: 6px; color: white; font-weight: bold; font-size: 12px; min-width: 40px; display: inline-block; margin-bottom: 10px;}
+    .bg-green { background-color: var(--safe); }
+    .bg-yellow { background-color: var(--warn); color: black; }
+    .bg-red { background-color: var(--danger); }
+    
+    /* 記錄按鈕 (現在是長條形) */
+    .record-btn {
+        background: #F2F2F7;
+        color: var(--blue);
+        border: none;
+        padding: 8px 0;
+        border-radius: 8px;
+        width: 100%;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+    }
+
+    /* Diary Styles (保持列表樣式比較好閱讀) */
+    .date-selector { display: flex; justify-content: space-between; align-items: center; background: white; padding: 10px 15px; border-radius: 12px; margin-bottom: 20px; }
+    .meal-section { margin-bottom: 20px; }
+    .meal-header { font-size: 18px; font-weight: bold; margin-bottom: 10px; color: #333; display: flex; align-items: center; }
+    .meal-header span { margin-left: auto; font-size: 12px; font-weight: normal; color: #888; }
+    .empty-msg { font-size: 14px; color: #ccc; text-align: center; padding: 10px; font-style: italic; }
+    
+    /* 日記裡的卡片還是維持橫向列表，比較省空間 */
+    .diary-card {
+        background: white; border-radius: 12px; padding: 12px; margin-bottom: 8px;
+        display: flex; justify-content: space-between; align-items: center;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    /* Bottom Navigation */
+    .bottom-nav {
+        position: fixed; bottom: 0; width: 100%; background: rgba(255,255,255,0.95);
+        border-top: 1px solid #ddd; display: flex; justify-content: space-around; padding: 10px 0;
+        backdrop-filter: blur(10px); z-index: 100; padding-bottom: max(10px, env(safe-area-inset-bottom));
+    }
+    .nav-item { display: flex; flex-direction: column; align-items: center; color: #8E8E93; font-size: 10px; border: none; background: none; cursor: pointer; width: 50%; }
+    .nav-item.active { color: var(--blue); }
+    .nav-icon { font-size: 24px; margin-bottom: 2px; }
+
+    /* Modals */
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 200; align-items: center; justify-content: center; }
+    .modal-content { background: white; padding: 20px; border-radius: 20px; width: 80%; max-width: 300px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: center; }
+    .modal-title { font-size: 18px; font-weight: bold; margin-bottom: 15px; }
+    .meal-choice-btn { display: block; width: 100%; padding: 12px; margin-bottom: 8px; border: none; border-radius: 10px; font-size: 16px; background: #F2F2F7; color: #007AFF; font-weight: 500; }
+    .btn-cancel { width: 100%; padding: 10px; margin-top: 5px; background: none; border: none; color: #FF3B30; }
+
+    .form-group { margin-bottom: 15px; text-align: left;}
+    label { display: block; margin-bottom: 5px; font-size: 14px; color: #666; }
+    select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd; background: #fff; font-size: 16px; }
+    .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+    .btn-save { flex: 1; padding: 10px; border-radius: 10px; border: none; background: var(--blue); color: white; font-size: 16px; font-weight: bold; }
+    .btn-close { flex: 1; padding: 10px; border-radius: 10px; border: none; background: #E5E5EA; color: #333; font-size: 16px; }
+</style>
+</head>
+<body>
+
+    <div id="searchPage" class="page-container active">
+        <h1>🔍 食物紅綠燈</h1>
+        
+        <div class="header-controls">
+            <input type="text" id="searchInput" placeholder="搜尋 (例: 拉麵)..." onkeyup="filterFood()">
+            <button class="add-custom-btn" onclick="openCustomModal()">+</button>
+        </div>
+
+        <div class="filter-btn-group">
+            <button class="filter-btn bg-green" onclick="filterByColor('green')">🟢 放心</button>
+            <button class="filter-btn bg-yellow" onclick="filterByColor('yellow')">🟡 適量</button>
+            <button class="filter-btn bg-red" onclick="filterByColor('red')">🔴 小心</button>
+            <button class="filter-btn" style="background:#8E8E93" onclick="filterByColor('all')">全部</button>
+        </div>
+
+        <div id="foodList">
+            </div>
+    </div>
+
+    <div id="diaryPage" class="page-container">
+        <h1>📅 飲食日記</h1>
+        
+        <div class="date-selector">
+            <button onclick="changeDate(-1)" style="border:none;background:none;font-size:18px">◀</button>
+            <span id="currentDateDisplay" style="font-weight:bold; font-size:16px">今天</span>
+            <button onclick="changeDate(1)" style="border:none;background:none;font-size:18px">▶</button>
+        </div>
+
+        <div id="diaryContent"></div>
+    </div>
+
+    <nav class="bottom-nav">
+        <button class="nav-item active" onclick="switchTab('search')" id="tab-search">
+            <div class="nav-icon">🔍</div>
+            <div>查食物</div>
+        </button>
+        <button class="nav-item" onclick="switchTab('diary')" id="tab-diary">
+            <div class="nav-icon">📝</div>
+            <div>看日記</div>
+        </button>
+    </nav>
+
+    <div id="mealModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-title">要記錄在哪一餐？</div>
+            <div id="selectedFoodName" style="margin-bottom:15px; color:#888;"></div>
+            <button class="meal-choice-btn" onclick="addToLog('breakfast')">🍳 早餐</button>
+            <button class="meal-choice-btn" onclick="addToLog('lunch')">🍱 午餐</button>
+            <button class="meal-choice-btn" onclick="addToLog('dinner')">🍲 晚餐</button>
+            <button class="btn-cancel" onclick="closeMealModal()">取消</button>
+        </div>
+    </div>
+
+    <div id="customModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-title">新增食物</div>
+            <div class="form-group">
+                <label>名稱</label>
+                <input type="text" id="newFoodName" placeholder="例如: 乾麵" style="width:100%; box-sizing:border-box;">
+            </div>
+            <div class="form-group">
+                <label>危險程度</label>
+                <select id="newFoodLevel">
+                    <option value="0">🟢 綠燈 (放心吃)</option>
+                    <option value="1">🟡 黃燈 (適量)</option>
+                    <option value="2">🔴 紅燈 (危險)</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-close" onclick="closeCustomModal()">取消</button>
+                <button class="btn-save" onclick="saveNewFood()">儲存</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+    const defaultDB = [
+        {name: "內臟 (肝/腎)", level: 2}, {name: "火鍋湯/濃湯", level: 2},
+        {name: "雞精/肉汁", level: 2}, {name: "啤酒/紹興酒", level: 2},
+        {name: "含糖飲料", level: 2}, {name: "蛤蜊/牡蠣", level: 2},
+        {name: "干貝/扇貝", level: 2}, {name: "小魚乾", level: 2},
+        {name: "魚卵/海膽", level: 2}, {name: "白帶魚/虱目魚", level: 2},
+        {name: "牛肉 (瘦)", level: 1}, {name: "豬肉 (瘦)", level: 1},
+        {name: "雞肉/鴨肉", level: 1}, {name: "羊肉", level: 1},
+        {name: "一般魚肉", level: 1}, {name: "蝦子/螃蟹", level: 1},
+        {name: "豆腐/豆漿", level: 1}, {name: "乾香菇", level: 1},
+        {name: "白飯/麵條", level: 0}, {name: "雞蛋/鴨蛋", level: 0},
+        {name: "牛奶/優格", level: 0}, {name: "青菜 (多數)", level: 0},
+        {name: "水果 (多數)", level: 0}, {name: "水/無糖茶", level: 0}
+    ];
+
+    let allFoods = [];
+    let currentFilter = 'all';
+    let selectedFoodItem = null;
+    let viewDate = new Date();
+
+    function init() {
+        allFoods = [...defaultDB];
+        const customData = localStorage.getItem('myGoutFoods_v3');
+        if (customData) {
+            const customFoods = JSON.parse(customData);
+            customFoods.forEach(f => f.isCustom = true);
+            allFoods = [...customFoods, ...allFoods];
+        }
+        filterFood();
+        renderDiary();
+        updateDateDisplay();
+    }
+
+    function switchTab(tab) {
+        document.querySelectorAll('.page-container').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.getElementById(tab + 'Page').classList.add('active');
+        document.getElementById('tab-' + tab).classList.add('active');
+        if(tab === 'diary') renderDiary();
+    }
+
+    // --- 這裡改成了格子渲染 (Grid Render) ---
+    function renderList(items) {
+        const listContainer = document.getElementById('foodList');
+        listContainer.innerHTML = '';
+
+        if (items.length === 0) {
+            listContainer.innerHTML = '<div style="grid-column: 1/-1; text-align:center;color:#999;margin-top:20px">找不到食物...</div>';
+            return;
+        }
+
+        items.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'grid-card'; // 改用 grid-card 樣式
+            
+            let badgeClass = '', badgeText = '';
+            if(item.level == 0) { badgeClass = 'bg-green'; badgeText = '綠燈'; }
+            else if(item.level == 1) { badgeClass = 'bg-yellow'; badgeText = '黃燈'; }
+            else { badgeClass = 'bg-red'; badgeText = '紅燈'; }
+
+            const itemString = encodeURIComponent(JSON.stringify(item));
+
+            div.innerHTML = `
+                ${item.isCustom ? '<span class="food-tag">✏️</span>' : ''}
+                <span class="badge ${badgeClass}">${badgeText}</span>
+                <span class="food-name">${item.name}</span>
+                <button class="record-btn" onclick="openMealModal('${itemString}')">📝 記錄</button>
+            `;
+            listContainer.appendChild(div);
+        });
+    }
+
+    function filterFood() {
+        const searchText = document.getElementById('searchInput').value.toLowerCase();
+        const filtered = allFoods.filter(item => {
+            const matchesSearch = item.name.toLowerCase().includes(searchText);
+            const matchesColor = currentFilter === 'all' ? true :
+                currentFilter === 'green' ? item.level == 0 :
+                currentFilter === 'yellow' ? item.level == 1 : item.level == 2;
+            return matchesSearch && matchesColor;
+        });
+        renderList(filtered);
+    }
+
+    function filterByColor(color) {
+        currentFilter = color;
+        document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+        filterFood();
+    }
+
+    function openMealModal(itemString) {
+        selectedFoodItem = JSON.parse(decodeURIComponent(itemString));
+        document.getElementById('selectedFoodName').innerText = `記錄: ${selectedFoodItem.name}`;
+        document.getElementById('mealModal').style.display = 'flex';
+    }
+
+    function closeMealModal() {
+        document.getElementById('mealModal').style.display = 'none';
+        selectedFoodItem = null;
+    }
+
+    function addToLog(mealType) {
+        if (!selectedFoodItem) return;
+        const dateKey = getDateKey(new Date());
+        let diary = JSON.parse(localStorage.getItem('goutDiary_v3') || "{}");
+        if (!diary[dateKey]) diary[dateKey] = {breakfast: [], lunch: [], dinner: []};
+        diary[dateKey][mealType].push(selectedFoodItem);
+        localStorage.setItem('goutDiary_v3', JSON.stringify(diary));
+        closeMealModal();
+        alert(`已加入今天的${getMealName(mealType)}！`);
+    }
+
+    function renderDiary() {
+        const dateKey = getDateKey(viewDate);
+        const diary = JSON.parse(localStorage.getItem('goutDiary_v3') || "{}");
+        const todayData = diary[dateKey] || {breakfast: [], lunch: [], dinner: []};
+        const content = document.getElementById('diaryContent');
+        
+        content.innerHTML = `
+            ${renderMealSection('早餐', 'breakfast', todayData.breakfast, dateKey)}
+            ${renderMealSection('午餐', 'lunch', todayData.lunch, dateKey)}
+            ${renderMealSection('晚餐', 'dinner', todayData.dinner, dateKey)}
+        `;
+    }
+
+    function renderMealSection(title, type, items, dateKey) {
+        let html = `<div class="meal-section"><div class="meal-header">${title} <span>${items.length} 項</span></div>`;
+        if (items.length === 0) {
+            html += `<div class="empty-msg">無紀錄</div>`;
+        } else {
+            items.forEach((item, index) => {
+                let color = item.level == 0 ? '#34C759' : item.level == 1 ? '#FFCC00' : '#FF3B30';
+                html += `
+                    <div class="diary-card">
+                        <div style="display:flex; align-items:center;">
+                            <div style="width:10px; height:10px; border-radius:50%; background:${color}; margin-right:10px;"></div>
+                            <span style="font-size:16px;">${item.name}</span>
+                        </div>
+                        <button class="delete-btn" style="color:#FF3B30; border:1px solid #FF3B30; background:none; border-radius:4px; padding:4px 10px;" onclick="deleteLogItem('${dateKey}', '${type}', ${index})">刪除</button>
+                    </div>
+                `;
+            });
+        }
+        html += `</div>`;
+        return html;
+    }
+
+    function deleteLogItem(dateKey, type, index) {
+        if(!confirm('刪除此紀錄？')) return;
+        let diary = JSON.parse(localStorage.getItem('goutDiary_v3') || "{}");
+        if (diary[dateKey] && diary[dateKey][type]) {
+            diary[dateKey][type].splice(index, 1);
+            localStorage.setItem('goutDiary_v3', JSON.stringify(diary));
+            renderDiary();
+        }
+    }
+
+    function getDateKey(date) { return date.toISOString().split('T')[0]; }
+    function changeDate(days) { viewDate.setDate(viewDate.getDate() + days); updateDateDisplay(); renderDiary(); }
+    
+    function updateDateDisplay() {
+        const today = new Date();
+        const isToday = getDateKey(viewDate) === getDateKey(today);
+        let displayStr = getDateKey(viewDate);
+        if (isToday) displayStr += " (今天)";
+        document.getElementById('currentDateDisplay').innerText = displayStr;
+    }
+    function getMealName(type) { if(type==='breakfast') return '早餐'; if(type==='lunch') return '午餐'; return '晚餐'; }
+
+    function openCustomModal() { document.getElementById('customModal').style.display = 'flex'; document.getElementById('newFoodName').value = ''; }
+    function closeCustomModal() { document.getElementById('customModal').style.display = 'none'; }
+    function saveNewFood() {
+        const name = document.getElementById('newFoodName').value.trim();
+        const level = parseInt(document.getElementById('newFoodLevel').value);
+        if(!name) { alert('請輸入名稱'); return; }
+        const newFood = { name: name, level: level, isCustom: true };
+        let customFoods = JSON.parse(localStorage.getItem('myGoutFoods_v3') || "[]");
+        customFoods.unshift(newFood);
+        localStorage.setItem('myGoutFoods_v3', JSON.stringify(customFoods));
+        closeCustomModal();
+        init();
+    }
+    window.onclick = function(event) { if (event.target.classList.contains('modal-overlay')) { event.target.style.display = 'none'; } }
+
+    init();
+</script>
+</body>
+</html>
