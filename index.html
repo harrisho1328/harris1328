@@ -5,46 +5,145 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="痛風計算機Pro">
-<title>痛風計算機 v7.1</title>
+<meta name="apple-mobile-web-app-title" content="痛風計算機">
+<title>痛風計算機</title>
 <style>
-    /* CSS 保持不變，為了節省空間，這裡沿用 v7.0 的樣式 */
-    :root { --safe: #34C759; --warn: #FFCC00; --danger: #FF3B30; --bg: #F2F2F7; --card: #FFFFFF; --blue: #007AFF; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg); margin: 0; padding: 0; height: 100vh; display: flex; flex-direction: column; -webkit-tap-highlight-color: transparent; }
-    .page-container { flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 110px; display: none; }
+    :root {
+        --safe: #34C759;
+        --warn: #FFCC00;
+        --danger: #FF3B30;
+        --bg: #F2F2F7;
+        --card: #FFFFFF;
+        --blue: #007AFF;
+        --text-main: #1C1C1E;
+        --text-sub: #8E8E93;
+    }
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background-color: var(--bg);
+        margin: 0;
+        padding: 0;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        -webkit-tap-highlight-color: transparent;
+        color: var(--text-main);
+    }
+    
+    /* 頂部儀表板 */
+    .dashboard {
+        background: white;
+        padding: 15px 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        position: sticky;
+        top: 0;
+        z-index: 50;
+    }
+    .dashboard-header {
+        display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;
+    }
+    .total-display { font-size: 24px; font-weight: 800; color: #333; }
+    .limit-label { font-size: 12px; color: var(--text-sub); }
+    
+    /* 進度條 */
+    .progress-track {
+        height: 12px; background: #E5E5EA; border-radius: 6px; overflow: hidden; position: relative;
+    }
+    .progress-fill {
+        height: 100%; width: 0%; transition: width 0.5s, background-color 0.5s, opacity 0.3s;
+    }
+    .marker-line {
+        position: absolute; top:0; bottom:0; width: 2px; background: #fff; z-index: 2;
+    }
+    
+    /* 狀態文字區 */
+    .status-area {
+        text-align: center; margin-top: 8px; font-size: 13px; font-weight: bold; min-height: 20px;
+    }
+
+    /* 頁面容器 */
+    .page-container {
+        flex: 1;
+        overflow-y: auto;
+        padding: 15px;
+        padding-bottom: 110px; /* 避開底部導航 */
+        display: none;
+    }
     .page-container.active { display: block; }
-    .dashboard { background: white; padding: 15px 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 50; }
-    .dashboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-    .total-display { font-size: 20px; font-weight: 800; color: #333; }
-    .limit-label { font-size: 12px; color: #888; }
-    .progress-track { height: 12px; background: #E5E5EA; border-radius: 6px; overflow: hidden; position: relative; }
-    .progress-fill { height: 100%; width: 0%; transition: width 0.5s, background-color 0.5s; }
-    .marker-line { position: absolute; top:0; bottom:0; width: 2px; background: #fff; z-index: 2; }
-    .controls { padding: 10px 15px; }
-    input[type="text"] { width: 100%; padding: 12px; font-size: 16px; border: none; border-radius: 12px; background: #E5E5EA; outline: none; box-sizing: border-box; }
+
+    /* 搜尋與過濾 */
+    .controls { padding: 0 5px 10px 5px; }
+    input[type="text"] {
+        width: 100%; padding: 12px; font-size: 16px; border: none; border-radius: 12px; background: #E5E5EA; outline: none; box-sizing: border-box;
+    }
     .filter-group { display: flex; gap: 8px; margin-top: 10px; overflow-x: auto; padding-bottom: 5px; }
-    .filter-btn { padding: 6px 12px; border-radius: 15px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; opacity: 0.6; color: white; white-space: nowrap; flex-shrink: 0; }
+    .filter-btn {
+        padding: 6px 12px; border-radius: 15px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; opacity: 0.6; color: white; white-space: nowrap; flex-shrink: 0;
+    }
     .filter-btn.active { opacity: 1; transform: scale(1.05); }
-    #foodList, #plateList { display: grid; grid-template-columns: 1fr; gap: 10px; padding: 0 15px; }
-    .food-card { background: var(--card); border-radius: 12px; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+
+    /* 食物卡片列表 */
+    #foodList, #plateList {
+        display: grid; grid-template-columns: 1fr; gap: 10px; padding: 0 5px;
+    }
+    .food-card {
+        background: var(--card);
+        border-radius: 12px;
+        padding: 12px 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
     .food-info { display: flex; flex-direction: column; }
     .food-name { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
-    .food-meta { font-size: 12px; color: #666; display: flex; align-items: center; gap: 8px; }
+    .food-meta { font-size: 12px; color: var(--text-sub); display: flex; align-items: center; gap: 8px; }
+    
+    /* 燈號 Badge */
     .badge { padding: 2px 6px; border-radius: 4px; color: white; font-weight: bold; font-size: 10px; }
     .bg-green { background-color: var(--safe); }
     .bg-yellow { background-color: var(--warn); color: black; }
     .bg-red { background-color: var(--danger); }
-    .add-btn { background: #F2F2F7; color: var(--blue); border: none; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 600; cursor: pointer; }
+    
+    /* 按鈕樣式 */
+    .add-btn {
+        background: #F2F2F7; color: var(--blue); border: none; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 600; cursor: pointer;
+    }
     .add-btn:active { background: #d1d1d6; }
-    .remove-btn { color: var(--danger); background: none; border: 1px solid var(--danger); padding: 4px 10px; border-radius: 6px; font-size: 12px; }
-    .bottom-nav { position: fixed; bottom: 0; width: 100%; background: rgba(255,255,255,0.95); border-top: 1px solid #ddd; display: flex; justify-content: space-around; padding: 10px 0; backdrop-filter: blur(10px); z-index: 100; padding-bottom: max(10px, env(safe-area-inset-bottom)); }
+    .remove-btn {
+        color: var(--danger); background: none; border: 1px solid var(--danger); padding: 4px 10px; border-radius: 6px; font-size: 12px; cursor: pointer;
+    }
+    .clear-btn {
+        font-size: 13px; color: #888; border: 1px solid #ddd; padding: 4px 10px; border-radius: 6px; background: none; cursor: pointer;
+    }
+
+    /* 底部導航 */
+    .bottom-nav {
+        position: fixed; bottom: 0; width: 100%; background: rgba(255,255,255,0.95);
+        border-top: 1px solid #ddd; display: flex; justify-content: space-around; padding: 10px 0;
+        backdrop-filter: blur(10px); z-index: 100; padding-bottom: max(10px, env(safe-area-inset-bottom));
+    }
     .nav-item { display: flex; flex-direction: column; align-items: center; color: #8E8E93; font-size: 10px; border: none; background: none; cursor: pointer; width: 50%; }
     .nav-item.active { color: var(--blue); }
     .nav-icon { font-size: 24px; margin-bottom: 2px; }
-    #toast { visibility: hidden; min-width: 200px; background-color: #333; color: #fff; text-align: center; border-radius: 50px; padding: 10px; position: fixed; z-index: 300; left: 50%; bottom: 90px; transform: translateX(-50%); font-size: 14px; opacity: 0; transition: opacity 0.3s; }
+
+    /* 懸浮新增按鈕 (FAB) */
+    .fab {
+        position: fixed; bottom: 100px; right: 20px; background: var(--blue); color: white; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; border: none; box-shadow: 0 4px 10px rgba(0,122,255,0.3); z-index: 90; cursor: pointer;
+    }
+
+    /* 提示與視窗 */
+    #toast {
+        visibility: hidden; min-width: 200px; background-color: #333; color: #fff; text-align: center; border-radius: 50px; padding: 10px; position: fixed; z-index: 300; left: 50%; bottom: 90px; transform: translateX(-50%); font-size: 14px; opacity: 0; transition: opacity 0.3s;
+    }
     #toast.show { visibility: visible; opacity: 0.9; bottom: 100px; }
-    .fab { position: fixed; bottom: 100px; right: 20px; background: var(--blue); color: white; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; border: none; box-shadow: 0 4px 10px rgba(0,122,255,0.3); z-index: 90; }
-    .clear-btn { font-size: 13px; color: #888; border: 1px solid #ddd; padding: 4px 8px; border-radius: 6px; background: none; cursor: pointer; }
+
+    .modal-overlay {
+        display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 200; align-items: center; justify-content: center;
+    }
+    .modal-content {
+        background: white; padding: 20px; border-radius: 20px; width: 80%; max-width: 300px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
 </style>
 </head>
 <body>
@@ -52,26 +151,25 @@
     <div class="dashboard">
         <div class="dashboard-header">
             <div>
-                <div class="limit-label">本餐攝取 (目標: <150mg)</div>
+                <div class="limit-label">本餐普林 (目標 <150)</div>
                 <div class="total-display"><span id="totalPurine">0</span> <span style="font-size:14px; color:#666;">mg</span></div>
             </div>
             <button class="clear-btn" onclick="clearPlate()">🗑️ 重置</button>
         </div>
         <div class="progress-track">
             <div id="progressFill" class="progress-fill" style="width: 0%;"></div>
-            <div class="marker-line" style="left: 37.5%;"></div> 
-        </div>
+            <div class="marker-line" style="left: 37.5%;"></div> </div>
         <div style="display:flex; justify-content:space-between; margin-top:4px; font-size:10px; color:#999;">
             <span>0</span>
             <span style="margin-left:-10px;">150 (單餐)</span>
             <span>400 (全日)</span>
         </div>
-        <div id="statusText" style="text-align:center; margin-top:8px; font-size:13px; font-weight:bold; color:var(--safe);">✅ 安全範圍</div>
+        <div id="statusText" class="status-area" style="color:var(--safe);">✅ 準備開始</div>
     </div>
 
     <div id="searchPage" class="page-container active">
         <div class="controls">
-            <input type="text" id="searchInput" placeholder="搜尋食物 (例: 菜心, 蘋果)..." onkeyup="filterFood()">
+            <input type="text" id="searchInput" placeholder="搜尋食物 (例: 芥蘭, 牛排)..." onkeyup="filterFood()">
             <div class="filter-btn-group">
                 <button class="filter-btn bg-green" onclick="filterByColor('green')">🟢 放心</button>
                 <button class="filter-btn bg-yellow" onclick="filterByColor('yellow')">🟡 適量</button>
@@ -83,7 +181,7 @@
     </div>
 
     <div id="platePage" class="page-container">
-        <h2 style="padding:0 20px; font-size:18px;">已選食物清單</h2>
+        <h2 style="padding:0 15px; font-size:18px; color:#333;">🍽️ 這一餐吃了...</h2>
         <div id="plateList"></div>
     </div>
 
@@ -95,36 +193,37 @@
             <div>找食物</div>
         </button>
         <button class="nav-item" onclick="switchTab('plate')" id="tab-plate">
-            <div class="nav-icon">🍽️</div>
-            <div>看餐盤</div>
+            <div class="nav-icon">📊</div>
+            <div>看結果</div>
         </button>
     </nav>
 
     <div id="toast">已加入！</div>
     
-    <div id="customModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); z-index:200; align-items:center; justify-content:center;">
-        <div style="background:white; padding:20px; border-radius:20px; width:80%; max-width:300px;">
-            <h3 style="margin-top:0;">新增自訂食物</h3>
-            <input type="text" id="newFoodName" placeholder="名稱" style="width:100%; padding:10px; margin-bottom:10px; box-sizing:border-box;">
-            <input type="number" id="newFoodPurine" placeholder="普林值 (mg/100g)" style="width:100%; padding:10px; margin-bottom:10px; box-sizing:border-box;">
-            <select id="newFoodLevel" style="width:100%; padding:10px; margin-bottom:20px;">
-                <option value="0">🟢 綠燈</option>
-                <option value="1">🟡 黃燈</option>
-                <option value="2">🔴 紅燈</option>
+    <div id="customModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 style="margin-top:0; text-align:center;">新增自訂食物</h3>
+            <input type="text" id="newFoodName" placeholder="名稱 (例: 乾麵)" style="width:100%; padding:10px; margin-bottom:10px; box-sizing:border-box; border:1px solid #ddd; border-radius:8px;">
+            <input type="number" id="newFoodPurine" placeholder="普林值 (mg/100g)" style="width:100%; padding:10px; margin-bottom:10px; box-sizing:border-box; border:1px solid #ddd; border-radius:8px;">
+            <p style="font-size:12px; color:#888; margin:0 0 10px 0;">*如果不確定，請估算顏色即可</p>
+            <select id="newFoodLevel" style="width:100%; padding:10px; margin-bottom:20px; border-radius:8px;">
+                <option value="0">🟢 綠燈 (0-50mg)</option>
+                <option value="1">🟡 黃燈 (50-150mg)</option>
+                <option value="2">🔴 紅燈 (>150mg)</option>
             </select>
             <div style="display:flex; gap:10px;">
-                <button onclick="closeCustomModal()" style="flex:1; padding:10px;">取消</button>
-                <button onclick="saveNewFood()" style="flex:1; padding:10px; background:var(--blue); color:white; border:none;">儲存</button>
+                <button onclick="closeCustomModal()" style="flex:1; padding:10px; border:none; background:#E5E5EA; border-radius:8px;">取消</button>
+                <button onclick="saveNewFood()" style="flex:1; padding:10px; background:var(--blue); color:white; border:none; border-radius:8px;">儲存</button>
             </div>
         </div>
     </div>
 
 <script>
-    // 🌟 v7.1 擴充數據庫 (平衡紅綠燈比例)
+    // 🌟 v7.2 完整資料庫 (含修正後的分類 + 代謝地雷邏輯)
     const defaultDB = [
         // --- 🟢 綠燈：放心吃 (Low Purine) 0 ~ 50 mg ---
         {name: "菜心/芥蘭", purine: 25, level: 0},
-        {name: "青瓜/青瓜", purine: 10, level: 0},
+        {name: "青瓜", purine: 10, level: 0},
         {name: "茄子", purine: 20, level: 0},
         {name: "粟米 (Corn)", purine: 30, level: 0},
         {name: "南瓜", purine: 25, level: 0},
@@ -144,7 +243,7 @@
         {name: "海參", purine: 8, level: 0},
         {name: "三文魚籽", purine: 20, level: 0},
         {name: "茶碗蒸", purine: 20, level: 0},
-        {name: "西蘭花", purine: 70, level: 0}, // 植物性普林影響較小，通常歸類綠燈
+        {name: "西蘭花", purine: 70, level: 0},
         {name: "菠菜", purine: 57, level: 0},
         {name: "豆腐", purine: 20, level: 0},
         {name: "白飯/麵", purine: 25, level: 0},
@@ -152,14 +251,13 @@
         {name: "牛奶", purine: 0, level: 0},
 
         // --- 🟡 黃燈：適量吃 (Medium Purine) 50 ~ 150 mg --- 
-        // 修正：從紅燈移下來的肉類與點心
         {name: "西冷/肉眼牛排", purine: 110, level: 1},
         {name: "牛腩", purine: 130, level: 1},
         {name: "吉列牛/豬 (炸)", purine: 120, level: 1},
         {name: "雞腿肉", purine: 140, level: 1},
         {name: "瘦豬肉", purine: 119, level: 1},
         {name: "雞胸肉", purine: 137, level: 1},
-        {name: "Parma Ham", purine: 150, level: 1}, // 剛好在邊界
+        {name: "Parma Ham", purine: 150, level: 1},
         {name: "魚子醬", purine: 144, level: 1},
         {name: "小籠包", purine: 100, level: 1},
         {name: "鳳爪", purine: 130, level: 1},
@@ -168,14 +266,12 @@
         {name: "鱈魚", purine: 109, level: 1},
         {name: "蘆筍", purine: 55, level: 1},
         {name: "鮮冬菇", purine: 60, level: 1},
-        // 原有的黃燈
         {name: "皮蛋瘦肉粥", purine: 70, level: 1},
         {name: "粟米肉粒飯", purine: 80, level: 1},
         {name: "杏仁/核桃", purine: 35, level: 1},
         {name: "花生", purine: 79, level: 1},
 
         // --- 🔴 紅燈：小心 / 避免 (High Purine) > 150 mg ---
-        // 真正的高普林食物
         {name: "雞精/滴雞精", purine: 500, level: 2}, 
         {name: "小魚乾", purine: 1138, level: 2},     
         {name: "酵母粉", purine: 680, level: 2},
@@ -191,19 +287,32 @@
         {name: "冬蔭功湯", purine: 180, level: 2},    
         {name: "豚骨拉麵湯", purine: 160, level: 2},
 
-        // 特殊代謝地雷 (數值低但必須紅燈)
-        {name: "啤酒 (350ml)", purine: 20, level: 2}, 
-        {name: "珍珠奶茶", purine: 10, level: 2},     
+        // --- 🚨 特殊代謝地雷 (低數值但強制紅燈) ---
+        // 啤酒：雙重打擊
+        {name: "啤酒 (350ml)", purine: 20, level: 2, isTrigger: true}, 
+        
+        // 烈酒：強烈阻礙代謝
+        {name: "威士忌/伏特加", purine: 0, level: 2, isTrigger: true},
+        
+        // 燒酒類
+        {name: "日本燒酎 (無糖)", purine: 0, level: 2, isTrigger: true},
+        {name: "韓國燒酒 (含糖)", purine: 0, level: 2, isTrigger: true}, // 酒精+果糖
+        
+        // 含糖飲品
+        {name: "珍珠奶茶", purine: 10, level: 2, isTrigger: true},     
+        {name: "含糖汽水/可樂", purine: 10, level: 2, isTrigger: true},
     ];
 
     let allFoods = [];
     let currentFilter = 'all';
 
+    // 初始化
     function init() {
         allFoods = [...defaultDB];
-        // 依照 level 排序，讓綠燈(0)在前面，看起來心情比較好
+        // 排序：綠燈優先 (讓心情好一點)
         allFoods.sort((a, b) => a.level - b.level);
         
+        // 載入自訂食物
         const customData = localStorage.getItem('myGoutFoods_v7');
         if (customData) {
             const customFoods = JSON.parse(customData);
@@ -214,6 +323,7 @@
         renderPlate();
     }
 
+    // 頁面切換
     function switchTab(tab) {
         document.querySelectorAll('.page-container').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -221,6 +331,7 @@
         document.getElementById('tab-' + tab).classList.add('active');
     }
 
+    // 渲染搜尋列表
     function renderList(items) {
         const listContainer = document.getElementById('foodList');
         listContainer.innerHTML = '';
@@ -235,10 +346,14 @@
             if(item.level == 0) { badgeClass = 'bg-green'; badgeText = '綠'; }
             else if(item.level == 1) { badgeClass = 'bg-yellow'; badgeText = '黃'; }
             else { badgeClass = 'bg-red'; badgeText = '紅'; }
+
+            // 如果是地雷，在列表中也標示
+            const triggerText = item.isTrigger ? '⚠️ ' : '';
             const itemString = encodeURIComponent(JSON.stringify(item));
+            
             div.innerHTML = `
                 <div class="food-info">
-                    <span class="food-name">${item.name} ${item.isCustom ? '✏️':''}</span>
+                    <span class="food-name">${triggerText}${item.name} ${item.isCustom ? '✏️':''}</span>
                     <div class="food-meta">
                         <span class="badge ${badgeClass}">${badgeText}</span>
                         <span>約 ${item.purine} mg/100g</span>
@@ -250,20 +365,25 @@
         });
     }
 
+    // 渲染餐盤列表 (帶有移除按鈕)
     function renderPlateList(items) {
         const listContainer = document.getElementById('plateList');
         listContainer.innerHTML = '';
         if (items.length === 0) {
-            listContainer.innerHTML = '<div style="text-align:center;color:#999;padding:20px;">盤子空空的...</div>';
+            listContainer.innerHTML = '<div style="text-align:center;color:#999;padding:30px;">盤子空空的...<br>去加點好吃的吧！</div>';
             return;
         }
         items.forEach((item, index) => {
             const div = document.createElement('div');
             div.className = 'food-card';
-            const realIndex = items.length - 1 - index;
+            const realIndex = items.length - 1 - index; // 倒序
+            
+            // 警示文字
+            const triggerWarning = item.isTrigger ? '<br><span style="color:var(--danger); font-size:11px;">⚠️ 代謝阻礙 (酒精/糖)</span>' : '';
+
             div.innerHTML = `
                 <div class="food-info">
-                    <span class="food-name">${item.name}</span>
+                    <span class="food-name">${item.name} ${triggerWarning}</span>
                     <div class="food-meta">
                         <span>+ ${item.purine} mg</span>
                     </div>
@@ -274,6 +394,7 @@
         });
     }
 
+    // 搜尋功能
     function filterFood() {
         const searchText = document.getElementById('searchInput').value.toLowerCase();
         const filtered = allFoods.filter(item => {
@@ -293,6 +414,7 @@
         filterFood();
     }
 
+    // --- 核心計算邏輯 (含地雷判定) ---
     function addToPlate(itemString) {
         const item = JSON.parse(decodeURIComponent(itemString));
         let plate = JSON.parse(localStorage.getItem('goutPlate_v7') || "[]");
@@ -310,7 +432,7 @@
     }
 
     function clearPlate() {
-        if(confirm("重置計算？")) {
+        if(confirm("確定要重置計算嗎？")) {
             localStorage.setItem('goutPlate_v7', "[]");
             renderPlate();
         }
@@ -318,10 +440,15 @@
 
     function renderPlate() {
         const plate = JSON.parse(localStorage.getItem('goutPlate_v7') || "[]");
-        renderPlateList(plate.slice().reverse());
+        renderPlateList(plate.slice().reverse()); // 顯示列表
+        
         let total = 0;
+        // 🌟 關鍵邏輯：檢查是否有地雷
+        const hasTrigger = plate.some(item => item.isTrigger === true);
+
         plate.forEach(i => total += (i.purine || 0));
         
+        // 更新 UI
         const totalDisplay = document.getElementById('totalPurine');
         const progressFill = document.getElementById('progressFill');
         const statusText = document.getElementById('statusText');
@@ -330,24 +457,39 @@
 
         let percentage = (total / 400) * 100;
         if(percentage > 100) percentage = 100;
+        
+        // 設定進度條寬度
         progressFill.style.width = percentage + "%";
         
-        if (total < 150) {
-            progressFill.style.backgroundColor = "var(--safe)";
-            statusText.innerText = "✅ 這一餐很安全 (單餐建議 <150)";
-            statusText.style.color = "var(--safe)";
-        } else if (total < 300) {
-            progressFill.style.backgroundColor = "var(--warn)";
-            statusText.innerText = "⚠️ 留意份量 (全日建議 <400)";
-            statusText.style.color = "#FFCC00";
-        } else {
+        // 顏色與狀態判定
+        if (hasTrigger) {
+            // 🚨 觸發地雷：強制紅燈
             progressFill.style.backgroundColor = "var(--danger)";
-            statusText.innerText = "🚨 危險！接近單日上限";
+            progressFill.style.opacity = "0.8"; // 稍微變暗以示不同
+            statusText.innerHTML = "🚨 <b>代謝受阻警報！</b><br>含酒精/高糖，阻礙尿酸排出";
             statusText.style.color = "var(--danger)";
+        } else {
+            // 正常普林計算
+            progressFill.style.opacity = "1";
+            if (total < 150) {
+                progressFill.style.backgroundColor = "var(--safe)";
+                statusText.innerText = "✅ 這一餐很安全 (單餐建議 <150)";
+                statusText.style.color = "var(--safe)";
+            } else if (total < 300) {
+                progressFill.style.backgroundColor = "var(--warn)";
+                statusText.innerText = "⚠️ 留意份量 (全日建議 <400)";
+                statusText.style.color = "#FFCC00";
+            } else {
+                progressFill.style.backgroundColor = "var(--danger)";
+                statusText.innerText = "🚨 危險！接近單日上限";
+                statusText.style.color = "var(--danger)";
+            }
         }
     }
 
+    // 數字跳動動畫
     function animateValue(obj, start, end, duration) {
+        if (start === end) return;
         let startTimestamp = null;
         const step = (timestamp) => {
             if (!startTimestamp) startTimestamp = timestamp;
@@ -360,13 +502,16 @@
         window.requestAnimationFrame(step);
     }
 
+    // --- 自訂食物 ---
     function openCustomModal() { document.getElementById('customModal').style.display = 'flex'; }
     function closeCustomModal() { document.getElementById('customModal').style.display = 'none'; }
+    
     function saveNewFood() {
         const name = document.getElementById('newFoodName').value;
         const purine = parseInt(document.getElementById('newFoodPurine').value) || 0;
         const level = parseInt(document.getElementById('newFoodLevel').value);
-        if(!name) return;
+        
+        if(!name) { alert("請輸入名稱"); return; }
         
         const newFood = { name, purine, level, isCustom:true };
         let customFoods = JSON.parse(localStorage.getItem('myGoutFoods_v7') || "[]");
@@ -380,6 +525,13 @@
         const t = document.getElementById("toast");
         t.innerText = msg; t.className = "show";
         setTimeout(() => t.className = "", 2000);
+    }
+
+    // 點擊遮罩關閉
+    window.onclick = function(event) {
+        if (event.target.classList.contains('modal-overlay')) {
+            closeCustomModal();
+        }
     }
 
     init();
