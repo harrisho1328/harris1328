@@ -18,6 +18,57 @@
         --text-main: #1C1C1E;
         --text-sub: #8E8E93;
     }
+
+    /* --- 🌙 Dark Mode 深色模式設定 --- */
+    [data-theme="dark"] {
+        --bg: #000000;          /* 背景全黑 */
+        --card: #1C1C1E;        /* 卡片深灰 (Apple 風格) */
+        --text-main: #FFFFFF;   /* 文字全白 */
+        --text-sub: #98989D;    /* 次要文字淺灰 */
+    }
+
+    /* 深色模式下的特殊元件修正 */
+    [data-theme="dark"] .dashboard,
+    [data-theme="dark"] .bottom-nav,
+    [data-theme="dark"] .modal-content {
+        background-color: #1C1C1E;
+        border-top-color: #38383A;
+    }
+    
+    [data-theme="dark"] input, 
+    [data-theme="dark"] select {
+        background-color: #2C2C2E !important;
+        color: white;
+        border: 1px solid #38383A;
+    }
+
+    [data-theme="dark"] .tag-btn {
+        background-color: #2C2C2E;
+        color: #ddd;
+        border-color: #38383A;
+    }
+    
+    [data-theme="dark"] .tag-btn.active {
+        background-color: var(--blue);
+        color: white;
+        border-color: var(--blue);
+    }
+
+    [data-theme="dark"] .action-btn {
+        background-color: #2C2C2E;
+        border-color: #38383A;
+        color: #0A84FF; /* 淺藍色在黑底較清楚 */
+    }
+    [data-theme="dark"] .action-btn:active { background-color: #3A3A3C; }
+
+    [data-theme="dark"] .dashboard-header .total-display,
+    [data-theme="dark"] h2 {
+        color: white !important;
+    }
+    
+    [data-theme="dark"] .progress-track { background: #333; }
+    [data-theme="dark"] .marker-line { background: #555; }
+
     body {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         background-color: var(--bg);
@@ -200,7 +251,10 @@
                 <div class="limit-label">本餐普林 (目標 <200)</div>
                 <div class="total-display"><span id="totalPurine">0</span> <span style="font-size:14px; color:#666;">mg</span></div>
             </div>
-            <button class="clear-btn" onclick="clearPlate()">🗑️ 重置</button>
+            <div style="display:flex; gap:10px;">
+                <button class="clear-btn" onclick="toggleTheme()" id="themeBtn">🌙</button>
+                <button class="clear-btn" onclick="clearPlate()">🗑️ 重置</button>
+            </div>
         </div>
         <div class="progress-track">
             <div id="progressFill" class="progress-fill" style="width: 0%;"></div>
@@ -421,6 +475,7 @@
 
     // 初始化
     function init() {
+        initTheme(); // 👈 加入這一行
         allFoods = [...defaultDB];
         allFoods.sort((a, b) => a.level - b.level);
         
@@ -434,6 +489,26 @@
         renderTags(); 
         filterFood();
         renderPlate();
+    }
+
+    // --- 🌙 Dark Mode 邏輯 ---
+    function toggleTheme() {
+        const current = document.documentElement.getAttribute('data-theme');
+        const target = current === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', target);
+        localStorage.setItem('theme_v7', target); // 記憶設定
+        updateThemeIcon(target);
+    }
+
+    function initTheme() {
+        const saved = localStorage.getItem('theme_v7') || 'dark';
+        document.documentElement.setAttribute('data-theme', saved);
+        updateThemeIcon(saved);
+    }
+
+    function updateThemeIcon(mode) {
+        const btn = document.getElementById('themeBtn');
+        if(btn) btn.innerText = mode === 'dark' ? '☀️' : '🌙';
     }
 
     // 渲染標籤列
