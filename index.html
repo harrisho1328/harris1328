@@ -122,7 +122,7 @@
 <script>
     // 🌟 v7.1 擴充數據庫 (平衡紅綠燈比例)
     const defaultDB = [
-        // --- 🟢 新增擴充：綠燈軍團 (讓列表更平衡) ---
+        // --- 🟢 綠燈：放心吃 (Low Purine) 0 ~ 50 mg ---
         {name: "菜心/芥蘭", purine: 25, level: 0},
         {name: "青瓜/青瓜", purine: 10, level: 0},
         {name: "茄子", purine: 20, level: 0},
@@ -141,64 +141,58 @@
         {name: "西瓜", purine: 10, level: 0},
         {name: "藍莓/士多啤梨", purine: 18, level: 0},
         {name: "布甸/啫喱", purine: 8, level: 0},
+        {name: "海參", purine: 8, level: 0},
+        {name: "三文魚籽", purine: 20, level: 0},
+        {name: "茶碗蒸", purine: 20, level: 0},
+        {name: "西蘭花", purine: 70, level: 0}, // 植物性普林影響較小，通常歸類綠燈
+        {name: "菠菜", purine: 57, level: 0},
+        {name: "豆腐", purine: 20, level: 0},
+        {name: "白飯/麵", purine: 25, level: 0},
+        {name: "雞蛋", purine: 0, level: 0},
+        {name: "牛奶", purine: 0, level: 0},
 
-        // --- 🟡 新增擴充：黃燈區 ---
+        // --- 🟡 黃燈：適量吃 (Medium Purine) 50 ~ 150 mg --- 
+        // 修正：從紅燈移下來的肉類與點心
+        {name: "西冷/肉眼牛排", purine: 110, level: 1},
+        {name: "牛腩", purine: 130, level: 1},
+        {name: "吉列牛/豬 (炸)", purine: 120, level: 1},
+        {name: "雞腿肉", purine: 140, level: 1},
+        {name: "瘦豬肉", purine: 119, level: 1},
+        {name: "雞胸肉", purine: 137, level: 1},
+        {name: "Parma Ham", purine: 150, level: 1}, // 剛好在邊界
+        {name: "魚子醬", purine: 144, level: 1},
+        {name: "小籠包", purine: 100, level: 1},
+        {name: "鳳爪", purine: 130, level: 1},
+        {name: "貢丸/牛丸", purine: 80, level: 1},
+        {name: "三文魚", purine: 119, level: 1},
+        {name: "鱈魚", purine: 109, level: 1},
+        {name: "蘆筍", purine: 55, level: 1},
+        {name: "鮮冬菇", purine: 60, level: 1},
+        // 原有的黃燈
         {name: "皮蛋瘦肉粥", purine: 70, level: 1},
         {name: "粟米肉粒飯", purine: 80, level: 1},
         {name: "杏仁/核桃", purine: 35, level: 1},
         {name: "花生", purine: 79, level: 1},
 
-        // --- 原有資料 (保留重要地雷與設定) ---
-        // 禁忌王者
+        // --- 🔴 紅燈：小心 / 避免 (High Purine) > 150 mg ---
+        // 真正的高普林食物
         {name: "雞精/滴雞精", purine: 500, level: 2}, 
         {name: "小魚乾", purine: 1138, level: 2},     
         {name: "酵母粉", purine: 680, level: 2},
         {name: "豬肝", purine: 284, level: 2},
         {name: "大閘蟹膏", purine: 300, level: 2},    
         {name: "老火湯", purine: 150, level: 2},      
-        {name: "啤酒 (350ml)", purine: 20, level: 2}, 
-
-        // 肉類
-        {name: "西冷/肉眼牛排", purine: 110, level: 2}, 
-        {name: "牛腩", purine: 130, level: 2},
-        {name: "吉列牛/豬 (炸)", purine: 120, level: 2}, 
-        {name: "雞腿肉", purine: 140, level: 2},
         {name: "燒鵝/鴨", purine: 165, level: 2},
-        {name: "瘦豬肉", purine: 119, level: 1},
-        {name: "雞胸肉", purine: 137, level: 1},      
-        {name: "Parma Ham", purine: 150, level: 2},   
-
-        // 海鮮
+        {name: "豬潤麵", purine: 280, level: 2},
         {name: "沙甸魚", purine: 210, level: 2},
         {name: "鯖魚", purine: 165, level: 2},
         {name: "蠔/青口", purine: 180, level: 2},
-        {name: "魚子醬", purine: 144, level: 2},      
-        {name: "三文魚", purine: 119, level: 1},
-        {name: "鱈魚", purine: 109, level: 1},
-        {name: "海參", purine: 8, level: 0},          
-        {name: "三文魚籽", purine: 20, level: 0},     
-
-        // 點心/加工
-        {name: "小籠包", purine: 100, level: 2},      
-        {name: "鳳爪", purine: 130, level: 2},
-        {name: "豬潤麵", purine: 280, level: 2},
-        {name: "貢丸/牛丸", purine: 80, level: 2},    
-        {name: "茶碗蒸", purine: 20, level: 0},       
-
-        // 蔬果豆 (原有)
         {name: "乾黃豆", purine: 172, level: 2},
-        {name: "西蘭花", purine: 70, level: 0},       
-        {name: "菠菜", purine: 57, level: 0},
-        {name: "蘆筍", purine: 55, level: 1},
-        {name: "鮮冬菇", purine: 60, level: 1},
-        {name: "豆腐", purine: 20, level: 0},         
-        {name: "白飯/麵", purine: 25, level: 0},
-        {name: "雞蛋", purine: 0, level: 0},          
-        {name: "牛奶", purine: 0, level: 0},
-
-        // 其他
         {name: "冬蔭功湯", purine: 180, level: 2},    
         {name: "豚骨拉麵湯", purine: 160, level: 2},
+
+        // 特殊代謝地雷 (數值低但必須紅燈)
+        {name: "啤酒 (350ml)", purine: 20, level: 2}, 
         {name: "珍珠奶茶", purine: 10, level: 2},     
     ];
 
