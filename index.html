@@ -19,6 +19,14 @@
         --text-sub: #8E8E93;
     }
 
+    .food-tip {
+        font-size: 11px;
+        color: #FF9500; /* 醒目的橙色 */
+        margin-top: 2px;
+        margin-bottom: 2px;
+        font-weight: normal;
+    }
+
     /* --- 🌙 Dark Mode 深色模式設定 --- */
     [data-theme="dark"] {
         --bg: #000000;          /* 背景全黑 */
@@ -322,8 +330,9 @@
     </div>
 
 <script>
+    
     // 🌟 v7.3 完整資料庫 (含標籤分類)
-    const defaultDB = [
+const defaultDB = [
         // --- 🟢 綠燈 ---
         {name: "菜心/芥蘭", purine: 25, level: 0, tags: ["蔬菜"]},
         {name: "青瓜", purine: 10, level: 0, tags: ["蔬菜"]},
@@ -351,7 +360,7 @@
         {name: "白飯/麵", purine: 25, level: 0, tags: ["主食"]},
         {name: "米粉/粉絲", purine: 15, level: 0, tags: ["主食", "火鍋"]},
         {name: "通粉/意粉", purine: 20, level: 0, tags: ["主食"]},
-        {name: "方包/饅頭", purine: 20, level: 0, tags: ["主食", "酒樓點心"]},
+        {name: "方包/饅頭", purine: 20, level: 0, tags: ["主食", "酒樓點心"], tip: "1 個 = 半份"},
         {name: "番茄蛋飯", purine: 50, level: 0, tags: ["主食"]},
 
         {name: "雞蛋", purine: 0, level: 0, tags: ["蛋奶"]},
@@ -362,16 +371,25 @@
         {name: "三文魚籽", purine: 20, level: 0, tags: ["海鮮", "日式"]},
         {name: "布甸/啫喱", purine: 8, level: 0, tags: ["甜品"]},
 
+        {name: "洋蔥", purine: 13, level: 0, tags: ["蔬菜", "西餐", "火鍋"]},
+
+        {name: "玉子燒/蛋壽司", purine: 20, level: 0, tags: ["壽司", "日式", "蛋奶"], tip: "2 件 = 半份"},
+        {name: "腐皮壽司", purine: 30, level: 0, tags: ["壽司", "日式", "豆製品"], tip: "2 件 = 半份"},
+        {name: "青瓜卷 (小卷)", purine: 15, level: 0, tags: ["壽司", "日式", "蔬菜"]},
+        {name: "粟米軍艦", purine: 40, level: 0, tags: ["壽司", "日式", "蔬菜"]},
+        {name: "蟹柳壽司", purine: 70, level: 0, tags: ["壽司", "日式", "加工食品"]}, 
+        {name: "八爪魚 (熟)", purine: 45, level: 0, tags: ["壽司", "日式", "海鮮"]}, 
+
         // --- 🟡 黃燈 ---
-        {name: "西冷/肉眼牛排", purine: 110, level: 1, tags: ["肉類", "西餐"]},
+        {name: "西冷/肉眼牛排", purine: 110, level: 1, tags: ["肉類", "西餐"], tip: "手掌心大小 = 全份 (100g)"},
         {name: "牛腩", purine: 130, level: 1, tags: ["肉類", "粉麵"]},
-        {name: "吉列牛/豬 (炸)", purine: 120, level: 1, tags: ["肉類", "日式"]},
+        {name: "吉列牛/豬 (炸)", purine: 120, level: 1, tags: ["肉類", "日式"], tip: "一塊豬排約 150g (全份+半份)"},
         {name: "瘦豬肉", purine: 119, level: 1, tags: ["肉類"]},
         {name: "雞腿肉", purine: 140, level: 1, tags: ["肉類"]},
         {name: "雞胸肉", purine: 137, level: 1, tags: ["肉類"]},
         {name: "Parma Ham", purine: 150, level: 1, tags: ["肉類", "西餐"]},
 
-        {name: "三文魚", purine: 119, level: 1, tags: ["海鮮", "日式"]},
+        {name: "三文魚", purine: 119, level: 1, tags: ["海鮮", "日式"], tip: "3 片厚切 = 半份"},
         {name: "鱈魚", purine: 109, level: 1, tags: ["海鮮"]},
         {name: "魚子醬", purine: 144, level: 1, tags: ["海鮮", "西餐"]},
         {name: "龍蝦 (肉)", purine: 100, level: 1, tags: ["海鮮", "酒樓點心"]},
@@ -391,9 +409,9 @@
         {name: "比目魚/扁口魚", purine: 120, level: 1, tags: ["海鮮", "日式"]},
         {name: "紅衫魚 (煎)", purine: 135, level: 1, tags: ["海鮮"]},
 
-        {name: "小籠包", purine: 100, level: 1, tags: ["酒樓點心"]},
-        {name: "鳳爪", purine: 130, level: 1, tags: ["酒樓點心"]},
-        {name: "貢丸/牛丸", purine: 80, level: 1, tags: ["加工食品", "火鍋", "粉麵"]},
+        {name: "小籠包", purine: 100, level: 1, tags: ["酒樓點心"], tip: "3 粒 = 半份"},
+        {name: "鳳爪", purine: 130, level: 1, tags: ["酒樓點心"], tip: "1 隻 = 半份"},
+        {name: "貢丸/牛丸", purine: 80, level: 1, tags: ["加工食品", "火鍋", "粉麵"], tip: "2-3 粒 = 半份"},
         {name: "蘆筍", purine: 55, level: 1, tags: ["蔬菜"]},
         {name: "鮮冬菇/香菇", purine: 60, level: 1, tags: ["菇類", "火鍋"]},
         {name: "秀珍菇", purine: 90, level: 1, tags: ["菇類", "火鍋"]},
@@ -406,17 +424,30 @@
         {name: "花生", purine: 79, level: 1, tags: ["零食"]},
         {name: "杏仁/核桃", purine: 35, level: 1, tags: ["零食"]},
 
-        {name: "鮮蝦餃", purine: 120, level: 1, tags: ["酒樓點心"]},
-        {name: "蟹籽燒賣", purine: 130, level: 1, tags: ["酒樓點心"]},
-        {name: "山竹牛肉球", purine: 110, level: 1, tags: ["酒樓點心"]},
-        {name: "叉燒包", purine: 90, level: 1, tags: ["酒樓點心"]},
-        {name: "蘿蔔糕 (煎)", purine: 70, level: 1, tags: ["酒樓點心"]},
-        {name: "鹹水角", purine: 100, level: 1, tags: ["酒樓點心"]},
-        {name: "鮮蝦腸粉", purine: 90, level: 1, tags: ["酒樓點心"]},
-        {name: "牛肉腸粉", purine: 80, level: 1, tags: ["酒樓點心"]},
-        {name: "珍珠雞/糯米雞", purine: 120, level: 1, tags: ["酒樓點心"]},
-        {name: "春捲 (炸)", purine: 110, level: 1, tags: ["酒樓點心"]},
-        {name: "豉汁蒸排骨", purine: 145, level: 1, tags: ["酒樓點心", "肉類"]},
+        {name: "鮮蝦餃", purine: 120, level: 1, tags: ["酒樓點心"], tip: "2 粒 = 半份"},
+        {name: "蟹籽燒賣", purine: 130, level: 1, tags: ["酒樓點心"], tip: "1.5 粒 = 半份"},
+        {name: "山竹牛肉球", purine: 110, level: 1, tags: ["酒樓點心"], tip: "1 粒 = 半份 (50g)"},
+        {name: "叉燒包", purine: 90, level: 1, tags: ["酒樓點心"], tip: "1 個 = 半份"},
+        {name: "蘿蔔糕 (煎)", purine: 70, level: 1, tags: ["酒樓點心"], tip: "1 件 = 半份"},
+        {name: "鹹水角", purine: 100, level: 1, tags: ["酒樓點心"], tip: "1 件 = 半份"},
+        {name: "鮮蝦腸粉", purine: 90, level: 1, tags: ["酒樓點心"], tip: "1 條切開 = 半份"},
+        {name: "牛肉腸粉", purine: 80, level: 1, tags: ["酒樓點心"], tip: "1 條切開 = 半份"},
+        {name: "珍珠雞/糯米雞", purine: 120, level: 1, tags: ["酒樓點心"], tip: "1 隻 = 全份 (100g)"},
+        {name: "春捲 (炸)", purine: 110, level: 1, tags: ["酒樓點心"], tip: "1 條 = 半份"},
+        {name: "豉汁蒸排骨", purine: 145, level: 1, tags: ["酒樓點心", "肉類"], tip: "3-4 塊 = 半份 (只吃肉)"},
+
+        {name: "蟹肉 (熟)", purine: 135, level: 1, tags: ["海鮮", "壽司", "火鍋"]}, 
+        {name: "吞拿魚 (Tuna)", purine: 150, level: 1, tags: ["海鮮", "日式", "罐頭", "西餐"]},
+
+        {name: "三文魚壽司", purine: 110, level: 1, tags: ["壽司", "日式", "海鮮"], tip: "2 件 = 半份 (50g)"},
+        {name: "吞拿魚壽司 (赤身)", purine: 140, level: 1, tags: ["壽司", "日式", "海鮮"], tip: "2 件 = 半份"},
+        {name: "油甘魚 (Hamachi)", purine: 130, level: 1, tags: ["壽司", "日式", "海鮮"], tip: "2 件 = 半份"},
+        {name: "帶子/帆立貝", purine: 125, level: 1, tags: ["壽司", "日式", "海鮮"], tip: "2 件 = 半份"},
+        {name: "熟蝦壽司", purine: 125, level: 1, tags: ["壽司", "日式", "海鮮"], tip: "3 件 = 半份"},
+        {name: "鰻魚壽司", purine: 115, level: 1, tags: ["壽司", "日式", "海鮮"], tip: "2 件 = 半份"},
+        {name: "北寄貝/赤貝", purine: 145, level: 1, tags: ["壽司", "日式", "海鮮"]}, 
+        {name: "加州卷", purine: 90, level: 1, tags: ["壽司", "日式", "主食"], tip: "2 件 = 半份"}, 
+        {name: "火炙芝士三文魚", purine: 120, level: 1, tags: ["壽司", "日式", "海鮮"]}, 
         
         // --- 🔴 紅燈 ---
         {name: "小魚乾", purine: 1138, level: 2, tags: ["乾貨", "零食"]},
@@ -452,13 +483,21 @@
         {name: "姬松茸 (乾)", purine: 290, level: 2, tags: ["乾貨"]},
         {name: "乾黃豆", purine: 172, level: 2, tags: ["乾貨"]},
 
-        {name: "豉汁蒸鳳爪", purine: 160, level: 2, tags: ["酒樓點心"]},
+        {name: "豉汁蒸鳳爪", purine: 160, level: 2, tags: ["酒樓點心"], tip: "1 隻 = 半份"},
         {name: "豬潤燒賣", purine: 280, level: 2, tags: ["酒樓點心", "內臟"]},
         {name: "金錢肚/牛柏葉", purine: 150, level: 2, tags: ["酒樓點心", "內臟"]},
         {name: "鮮竹卷", purine: 160, level: 2, tags: ["酒樓點心"]},
         {name: "灌湯餃", purine: 180, level: 2, tags: ["酒樓點心"]},
-        {name: "芋角 (炸)", purine: 120, level: 2, tags: ["酒樓點心"]},
+        {name: "芋角 (炸)", purine: 120, level: 2, tags: ["酒樓點心"], tip: "1 件 = 半份"},
         {name: "XO醬炒腸粉", purine: 140, level: 2, tags: ["酒樓點心"]},
+
+        {name: "海膽 (Uni)", purine: 180, level: 2, tags: ["壽司", "日式", "海鮮"]}, 
+        {name: "拖羅 (Toro)", purine: 170, level: 2, tags: ["壽司", "日式", "海鮮"]}, 
+        {name: "甜蝦/牡丹蝦", purine: 160, level: 2, tags: ["壽司", "日式", "海鮮"]}, 
+        {name: "鯖魚 (Saba)", purine: 170, level: 2, tags: ["壽司", "日式", "海鮮"]}, 
+        {name: "鮟鱇魚肝", purine: 350, level: 2, tags: ["壽司", "日式", "內臟"]}, 
+        {name: "白子 (魚精巢)", purine: 300, level: 2, tags: ["壽司", "日式", "內臟"]}, 
+        {name: "希靈魚 (連卵)", purine: 200, level: 2, tags: ["壽司", "日式", "海鮮"]},
 
         // --- 🚨 代謝地雷 ---
         {name: "啤酒 (350ml)", purine: 20, level: 2, isTrigger: true, tags: ["飲品", "酒"]},
@@ -467,6 +506,7 @@
         {name: "韓國燒酒", purine: 0, level: 2, isTrigger: true, tags: ["飲品", "酒"]},
         {name: "珍珠奶茶", purine: 10, level: 2, isTrigger: true, tags: ["飲品"]},
         {name: "含糖汽水", purine: 10, level: 2, isTrigger: true, tags: ["飲品"]},
+
     ];
 
     let allFoods = [];
@@ -556,7 +596,7 @@
         document.getElementById('tab-' + tab).classList.add('active');
     }
 
-    // 渲染搜尋列表 (顯示半份/全份按鈕)
+    // 渲染搜尋列表 (顯示半份/全份按鈕 + 💡小貼士)
     function renderList(items) {
         const listContainer = document.getElementById('foodList');
         listContainer.innerHTML = '';
@@ -575,10 +615,13 @@
             const triggerText = item.isTrigger ? '⚠️ ' : '';
             const itemString = encodeURIComponent(JSON.stringify(item));
             
+            // 🌟 新增：檢查有沒有小貼士
+            const tipHtml = item.tip ? `<div class="food-tip">💡 ${item.tip}</div>` : '';
+            
             div.innerHTML = `
                 <div class="food-info">
                     <span class="food-name">${triggerText}${item.name} ${item.isCustom ? '✏️':''}</span>
-                    <div class="food-meta">
+                    ${tipHtml} <div class="food-meta">
                         <span class="badge ${badgeClass}">${badgeText}</span>
                         <span>約 ${item.purine} mg/100g</span>
                     </div>
